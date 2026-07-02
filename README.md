@@ -1,9 +1,11 @@
-# WC26 Command Center
+# The World Cup Monitor
 
 A self-contained FIFA World Cup 2026 fan dashboard. No build step, no API keys, no accounts —
 plain HTML/JS that pulls live data from ESPN's public JSON API in your browser.
 
-## Run it
+**Live site: https://drande09.github.io/wc-monitor/** (deploys automatically from `main` via GitHub Pages)
+
+## Run it locally
 
 Double-click **START.bat** (starts a tiny local server on port 8642 and opens the site).
 
