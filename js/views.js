@@ -237,17 +237,71 @@ function renderGroups() {
 }
 
 /* ================= BRACKET ================= */
+/* Wire the knockout tree so each column lines up with its feeders.
+   Feeder of a slot = the previous-round match its team won (decided
+   slots), or the match its placeholder label points at ("RD32 W11" /
+   "Round of 32 11 Winner" — within-round numbers match FIFA numbering
+   order). Columns are then ordered top-down from the final so match i
+   in round r sits between matches 2i-1 and 2i of round r-1. */
+function buildBracketColumns() {
+  const ROUNDS = ["r32", "r16", "qf", "sf", "final"];
+  const byNum = {};
+  for (const key of ROUNDS) {
+    byNum[key] = state.matches.filter((m) => m.round === key)
+      .sort((a, b) => (a.matchNumber ?? 9999) - (b.matchNumber ?? 9999) || a.date - b.date);
+  }
+  const feederNum = (label) => {
+    const m = /W\s*(\d+)/i.exec(label || "") || /(\d+)\s+winner/i.exec(label || "");
+    return m ? +m[1] : null;
+  };
+  const findFeeder = (side, prev) => {
+    if (side.name) {
+      const f = prev.find((p) => p.home.name === side.name || p.away.name === side.name);
+      if (f) return f;
+    }
+    const n = feederNum(side.tbdLabel);
+    if (n != null) {
+      if (n >= 1 && n <= prev.length) return prev[n - 1];       // within-round number
+      const abs = prev.find((p) => p.matchNumber === n);         // absolute FIFA number
+      if (abs) return abs;
+    }
+    return null;
+  };
+  const cols = { final: byNum.final };
+  for (let i = ROUNDS.length - 1; i > 0; i--) {
+    const cur = cols[ROUNDS[i]] || [];
+    const prevAll = byNum[ROUNDS[i - 1]];
+    const used = new Set();
+    const ordered = [];
+    for (const m of cur) {
+      for (const side of [m.home, m.away]) {
+        const f = findFeeder(side, prevAll);
+        if (f && !used.has(f.id)) { ordered.push(f); used.add(f.id); }
+        else ordered.push(null);
+      }
+    }
+    const leftovers = prevAll.filter((p) => !used.has(p.id));
+    for (let k = 0; k < ordered.length; k++) if (!ordered[k]) ordered[k] = leftovers.shift() || null;
+    cols[ROUNDS[i - 1]] = ordered.concat(leftovers).filter(Boolean);
+  }
+  // official within-round numbers (matchNumber order), for the M-tags
+  const numIndex = {};
+  for (const key of ROUNDS) byNum[key].forEach((m, i) => { numIndex[m.id] = i + 1; });
+  return { cols, numIndex };
+}
+
 function renderBracket() {
   const el = $("#view-bracket");
+  const { cols, numIndex } = buildBracketColumns();
   const koRounds = [["r32", "Round of 32"], ["r16", "Round of 16"], ["qf", "Quarterfinals"], ["sf", "Semifinals"], ["final", "Final"]];
   let html = `<div id="bracket-scroll"><div class="bracket">`;
   for (const [key, label] of koRounds) {
-    const ms = state.matches.filter((m) => m.round === key);
+    const ms = cols[key] || [];
     html += `<div class="b-round"><h3>${label}</h3><div class="b-matches">`;
     if (!ms.length) {
       html += `<div class="b-match"><span class="tbd">TBD</span></div>`;
     }
-    for (const m of ms) {
+    for (const [mi, m] of ms.entries()) {
       const row = (t) => {
         if (!t.name) return `<div class="bm-row"><span class="n tbd">${esc(t.tbdLabel || "TBD")}</span></div>`;
         const cls = m.state === "post" ? (t.winner ? "w" : "l") : "";
@@ -257,8 +311,9 @@ function renderBracket() {
       };
       const meta = m.state === "in" ? `<span style="color:var(--live)">&#9679; ${esc(m.clock || "LIVE")}</span>`
         : m.state === "pre" ? `${fmtDate(m.date)} ${fmtTime(m.date)}` : esc(m.detail || "FT");
+      const tag = key === "final" ? "FINAL" : `${key.toUpperCase()} M${numIndex[m.id] ?? mi + 1}`;
       html += `<div class="b-match ${m.state === "in" ? "live" : ""}" data-match="${m.id}">
-        ${row(m.home)}${row(m.away)}<div class="bm-meta">${meta}</div></div>`;
+        ${row(m.home)}${row(m.away)}<div class="bm-meta"><span class="bm-tag">${tag}</span> &middot; ${meta}</div></div>`;
     }
     html += `</div></div>`;
   }

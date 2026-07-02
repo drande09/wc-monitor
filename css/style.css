@@ -245,6 +245,7 @@ tr.q-out .team-cell { opacity: .55; }
 .b-match .bm-row.l { color: var(--text-faint); }
 .b-match .bm-row.l .n { font-weight: 400; }
 .b-match .bm-meta { font-size: 10px; color: var(--text-faint); margin-top: 3px; border-top: 1px dashed var(--rule); padding-top: 3px; }
+.b-match .bm-tag { font: 700 9.5px var(--sans); letter-spacing: 1px; color: var(--gold); }
 .b-match .tbd { color: var(--text-faint); font-style: italic; font-weight: 400; }
 
 /* ---------- filters / pills ---------- */

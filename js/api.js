@@ -258,6 +258,28 @@ const API = (() => {
     catch (e) { _extPromise = null; throw e; }
   }
 
+  /* ---- official match numbers for knockout events ----
+     Only the core API has competitions[0].matchNumber; needed to
+     wire the bracket. Immutable, so cached in localStorage. ---- */
+  const MATCHNUM_KEY = "wc26_matchNumbers_v1";
+  async function attachMatchNumbers(matches) {
+    let cache = {};
+    try { cache = JSON.parse(localStorage.getItem(MATCHNUM_KEY)) || {}; } catch (e) {}
+    const ko = matches.filter((m) => m.round !== "group");
+    const missing = ko.filter((m) => cache[m.id] == null);
+    if (missing.length) {
+      await Promise.all(missing.map(async (m) => {
+        try {
+          const j = await getJSON(`https://sports.core.api.espn.com/v2/sports/soccer/leagues/fifa.world/events/${m.id}?lang=en&region=us`);
+          const n = j.competitions?.[0]?.matchNumber;
+          if (n != null) cache[m.id] = +n;
+        } catch (e) { /* leave unnumbered; bracket falls back to date order */ }
+      }));
+      try { localStorage.setItem(MATCHNUM_KEY, JSON.stringify(cache)); } catch (e) {}
+    }
+    for (const m of ko) m.matchNumber = cache[m.id] ?? null;
+  }
+
   /* ---- match summary (deep dive) ---- */
   const summaryCache = new Map();
   async function fetchSummary(eventId) {
@@ -340,6 +362,7 @@ const API = (() => {
     ]);
     const matches = (sb.events || []).map(normalizeEvent).filter(Boolean)
       .sort((a, b) => a.date - b.date);
+    await attachMatchNumbers(matches);
     const groups = computeGroups(matches, official);
     const teamMeta = {};
     for (const m of matches) {
