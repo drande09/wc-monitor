@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The World Cup Monitor</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9917;</text></svg>">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="topbar">
+  <div class="brand">
+    <div class="brand-kicker">Monitoring the Situation &middot; Summer 2026</div>
+    <h1>The World Cup Monitor</h1>
+    <div class="brand-sub">Scores, brackets &amp; expectations &mdash; all 48 federations under close observation.</div>
+  </div>
+  <div id="status-cluster">
+    <div id="live-indicator" class="hidden"><span class="pulse-dot"></span><span id="live-count">0 LIVE</span></div>
+    <div id="refresh-status">
+      <span id="last-updated">connecting&hellip;</span>
+      <button id="refresh-btn" title="Refresh now">&#8635;</button>
+    </div>
+  </div>
+</header>
+
+<nav id="tabs">
+  <button class="tab active" data-view="overview">Overview</button>
+  <button class="tab" data-view="matches">Matches</button>
+  <button class="tab" data-view="groups">Groups</button>
+  <button class="tab" data-view="bracket">Bracket</button>
+  <button class="tab" data-view="federations">Federations</button>
+  <button class="tab" data-view="teams">Teams</button>
+  <button class="tab" data-view="players">Players</button>
+</nav>
+
+<main id="main">
+  <section id="view-overview" class="view active"><div class="loading">Loading tournament data&hellip;</div></section>
+  <section id="view-matches" class="view"></section>
+  <section id="view-groups" class="view"></section>
+  <section id="view-bracket" class="view"></section>
+  <section id="view-federations" class="view"></section>
+  <section id="view-teams" class="view"></section>
+  <section id="view-players" class="view"></section>
+</main>
+
+<!-- match / team deep-dive modal -->
+<div id="modal-backdrop" class="hidden">
+  <div id="modal">
+    <button id="modal-close">&times;</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<footer>
+  <span>Set in ink &amp; paper &middot; live wire courtesy of ESPN's public scoreboard &middot; expectations fixed pre-tournament (Elo, FIFA rank, title odds) &middot; an unofficial fan periodical</span>
+</footer>
+
+<script src="js/expectations.js"></script>
+<script src="js/api.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/views.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
